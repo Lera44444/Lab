@@ -1,86 +1,85 @@
 #include <iostream>               
 #include <fstream>
-#include <filesystem>
-#include <string>
-#include <sstream>
+#include <cstring>
+#include <cstdlib>
 
 using namespace std;
 
-int list_book_size = 0; 
-string* list_book = nullptr;
-string filename = "books.txt";
+struct Book {
+    char name[101];     
+    char author[51];  
+    int year;          
+    float rating;       
+};
 
-string* push_mas(string* old_array, int size, string s) {
-    string* n_list_book = new string[size + 1]; 
-
-    for (int i = 0; i < size; ++i) {
-        n_list_book[i] = old_array[i];
-    }
-
-    n_list_book[size] = s;  
-
-    delete[] old_array;
-    return n_list_book;
-}
+const int max_kolich_book = 1000;
+Book list_book[max_kolich_book];
+int book_count = 0;
+const char* filename = "books.txt";
 
 void add_book() {
-    string name;
-    string auth;
-    string year;
-    string ots;
+    if (book_count >= max_kolich_book) {
+        cout << "Error: maximum book limit reached!" << endl;
+        return;
+    }
 
-    cout << "--Add book--\nName:" << endl;
-    cin >> name;
-    while(name.length() > 100) {
-        cout << "Error: too much letters(" << endl;
+    cout << "--Add book--" << endl;
+    
+    
+    cout << "Name:" << endl;
+    char name[101];
+    cin.ignore(); 
+    cin.getline(name, 100);
+    while(strlen(name) > 100) {
+        cout << "Error: too many letters!" << endl;
         cout << "Name:" << endl;
-        cin >> name;
+        cin.getline(name, 100);
     }
-    list_book = push_mas(list_book, list_book_size, name);
-    list_book_size++;
-
+    strcpy(list_book[book_count].name, name);
+    
+  
     cout << "Author:" << endl;
-    cin >> auth;
-    while(auth.length() > 50) {
-        cout << "Error: too much letters(" << endl;
+    char author[51];
+    cin.getline(author, 50);
+    while(strlen(author) > 50) {
+        cout << "Error: too many letters!" << endl;
         cout << "Author:" << endl;
-        cin >> auth;
+        cin.getline(author, 50);
     }
-    list_book = push_mas(list_book, list_book_size, auth);
-    list_book_size++;
+    strcpy(list_book[book_count].author, author);
+    
 
     cout << "Year:" << endl;
-    cin >> year;
-    list_book = push_mas(list_book, list_book_size, year);
-    list_book_size++;
-
+    cin >> list_book[book_count].year;
+    
+  
     cout << "Rating:" << endl;
-    cin >> ots;
-    while(stof(ots) > 10) {
-        cout << "Error: maximum 10(" << endl;
+    cin >> list_book[book_count].rating;
+    while(list_book[book_count].rating > 10) {
+        cout << "Error: maximum 10!" << endl;
         cout << "Rating:" << endl;
-        cin >> ots;
+        cin >> list_book[book_count].rating;
     }
-    list_book = push_mas(list_book, list_book_size, ots);
-    list_book_size++;
-
-    cout << endl;
-    cout << "Book added!" << endl;
-    cout << endl;
+    
+    book_count++;
+    cout << endl << "Book added!" << endl << endl;
 }
 
 void show_book() {
     cout << "--All books--" << endl;
     cout << endl;
     
-    int book_count = list_book_size / 4; 
+    if (book_count == 0) {
+        cout << "No books available." << endl << endl;
+        return;
+    }
+    
     for(int i = 0; i < book_count; i++) {
-        int base_index = i * 4;
         cout << "Book " << (i + 1) << ": " 
-             << list_book[base_index] << " " 
-             << list_book[base_index + 1] << " " 
-             << list_book[base_index + 2] << " " 
-             << list_book[base_index + 3] << endl;
+             << list_book[i].name << " | " 
+             << list_book[i].author << " | " 
+             << list_book[i].year << " | " 
+             << list_book[i].rating << endl;
     }
     cout << endl;
 }
@@ -89,35 +88,59 @@ void statistic() {
     cout << "--Book statistic--" << endl;
     cout << endl;
     
-    int book_count = list_book_size / 4; 
-    string numb = to_string(book_count);
-
-    cout << "Number of books read: " + numb << endl;
-    cout << endl;
-
     if (book_count == 0) {
         cout << "No books for statistics" << endl;
         cout << endl;
         return;
     }
 
+
+    char numb[5];
+    int n = book_count;
+    int digits = 0;
+    int temp = n;
+    
+
+    while (temp > 0) {
+        digits++;
+        temp /= 10;
+    }
+    
+
+    temp = n;
+    for (int i = digits - 1; i >= 0; i--) {
+        numb[i] = '0' + (temp % 10);
+        temp /= 10;
+    }
+    numb[digits] = '\0';
+
+    cout << "Number of books read: ";
+    if (n == 0) {
+        cout << "0" << endl;
+    } else {
+        cout << numb << endl;
+    }
+    cout << endl;
+
     float num_ots = 0;
     float max_ots = 0;
     for(int i = 0; i < book_count; i++) {
-        float rating = stof(list_book[i * 4 + 3]);
-        num_ots += rating;
-        if (rating > max_ots) {
-            max_ots = rating;
+        num_ots += list_book[i].rating;
+        if (list_book[i].rating > max_ots) {
+            max_ots = list_book[i].rating;
         }
     }
     
-    cout << "Average rating: " + to_string(num_ots / book_count) << endl;
+
+    cout << "Average rating: ";
+    float avg = num_ots / book_count;
+    cout << avg << endl;
     cout << endl;
 
     cout << "Best book(s): " << endl;
     for(int i = 0; i < book_count; i++) {
-        if (stof(list_book[i * 4 + 3]) == max_ots) {
-            cout << list_book[i * 4] << endl;
+        if (list_book[i].rating == max_ots) {
+            cout << list_book[i].name << endl;
         }
     }
     cout << endl;
@@ -126,58 +149,139 @@ void statistic() {
 void save() {
     ofstream out(filename, ios::trunc);
     if (out.is_open()) {
-        for(int i = 0; i < list_book_size; ++i) {
-            out << list_book[i] << "$"; 
+        for(int i = 0; i < book_count; i++) {
+            out << list_book[i].name << "$" 
+                << list_book[i].author << "$" 
+                << list_book[i].year << "$" 
+                << list_book[i].rating;
             
-            if ((i + 1) % 4 == 0) {
-                out << endl; 
+            if (i < book_count - 1) {
+                out << endl;
             }
         }
     }
     out.close();  
+    cout << "Data saved to " << filename << endl;
+}
+
+
+int string_to_int(const char* str) {
+    int result = 0;
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (str[i] >= '0' && str[i] <= '9') {
+            result = result * 10 + (str[i] - '0');
+        }
+    }
+    return result;
+}
+
+
+float string_to_float(const char* str) {
+    float result = 0.0;
+    float decimal = 0.1;
+    bool after_decimal = false;
+    
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (str[i] == '.') {
+            after_decimal = true;
+            continue;
+        }
+        
+        if (str[i] >= '0' && str[i] <= '9') {
+            if (after_decimal) {
+                result += (str[i] - '0') * decimal;
+                decimal *= 0.1;
+            } else {
+                result = result * 10 + (str[i] - '0');
+            }
+        }
+    }
+    return result;
+}
+
+void load_books() {
+    ifstream file(filename);
+    if (!file.is_open()) {
+        return; 
+    }
+    
+    char line[256];
+    book_count = 0;
+    
+    while (file.getline(line, 256) && book_count < max_kolich_book) {
+        char* tokens[4];
+        int token_count = 0;
+        
+ 
+        char* token = strtok(line, "$");
+        while (token != nullptr && token_count < 4) {
+            tokens[token_count] = token;
+            token_count++;
+            token = strtok(nullptr, "$");
+        }
+        
+        if (token_count == 4) {
+    
+            strncpy(list_book[book_count].name, tokens[0], 100);
+            list_book[book_count].name[100] = '\0';
+            
+        
+            strncpy(list_book[book_count].author, tokens[1], 50);
+            list_book[book_count].author[50] = '\0';
+            
+
+            list_book[book_count].year = string_to_int(tokens[2]);
+            
+
+            list_book[book_count].rating = string_to_float(tokens[3]);
+            
+            book_count++;
+        }
+    }
+    file.close();
 }
 
 void menu() {
     int num;                          
-    cout << "--Book tracker by Lera--\n1. Add book\n2. Show all books\n3. Show statistic\n4. Exit\n\nSelect:" << endl;
+    cout << "--Book tracker by Lera--" << endl;
+    cout << "1. Add book" << endl;
+    cout << "2. Show all books" << endl;
+    cout << "3. Show statistic" << endl;
+    cout << "4. Exit" << endl;
+    cout << "Select: ";
     cin >> num;
+    
     switch(num) {
-        case 1: add_book(); menu(); break;
-        case 2: show_book(); menu(); break;
-        case 3: statistic(); menu(); break;
-        case 4: save(); break;
-        default: cout << "Error :(" << endl; menu();
+        case 1: 
+            add_book(); 
+            menu(); 
+            break;
+        case 2: 
+            show_book();
+            menu(); 
+            break;
+        case 3: 
+            statistic();
+            menu(); 
+            break;
+        case 4: 
+            save(); 
+            break;
+        default: 
+            cout << "Error :(" << endl; 
+            menu();
     }
 }
 
 int main() {
+
+    book_count = 0;
     
-    list_book = new string[0];
-    list_book_size = 0;
 
-    if (filesystem::exists(filename)) {
-        string s;
-        ifstream file(filename);
-        while (getline(file, s)) {
-            stringstream ss(s);
-            string segm;
-
-            while(getline(ss, segm, '$')) {
-                if (!segm.empty()) { 
-                    list_book = push_mas(list_book, list_book_size, segm);
-                    list_book_size++;
-                }
-            }
-        }
-    } else {
-        ofstream outfile(filename);
-        outfile.close();
-    }
+    load_books();
+    
 
     menu();
-    
-    
-    delete[] list_book;
     
     return 0; 
 }
